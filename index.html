@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>微信快捷回复</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        body {
+            background: #f5f5f5;
+            color: #333;
+            min-height: 100vh;
+            padding: 10px;
+            font-size: 14px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        h1 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #07C160;
+            text-align: center;
+        }
+        
+        .subtitle {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .action-btn {
+            background: white;
+            border: none;
+            padding: 12px 8px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            flex-direction: column;
+        }
+        
+        .action-btn.primary {
+            background: #07C160;
+            color: white;
+        }
+        
+        .action-btn.secondary {
+            background: #10AEFF;
+            color: white;
+        }
+        
+        .action-btn.image {
+            background: #FF6B35;
+            color: white;
+        }
+        
+        .search-box {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        
+        .search-box input {
+            width: 100%;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .search-box input:focus {
+            border-color: #07C160;
+        }
+        
+        .text-blocks-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .text-block {
+            background: white;
+            border-radius: 8px;
+            padding: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .text-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+        
+        .text-block-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .collapse-icon {
+            font-size: 12px;
+            color: #999;
+            transition: transform 0.3s ease;
+        }
+        
+        .text-block.collapsed .collapse-icon {
+            transform: rotate(-90deg);
+        }
+        
+        .text-block-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            background: #f8f8f8;
+            border: none;
+        }
+        
+        .action-icon.copy {
+            color: #07C160;
+        }
+        
+        .action-icon.download {
+            color: #10AEFF;
+        }
+        
+        .action-icon.share {
+            color: #FF6B35;
+        }
+        
+        .action-icon.edit {
+            color: #FF6B35;
+        }
+        
+        .action-icon.delete {
+            color: #FA5151;
+        }
+        
+        .text-block-content {
+            padding: 15px;
+            background: #fafafa;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+        
+        .text-block.collapsed .text-block-content {
+            display: none;
+        }
+        
+        .text-block-footer {
+            padding: 10px 15px;
+            background: #f8f8f8;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .text-block.collapsed .text-block-footer {
+            display: none;
+        }
+        
+        .copy-content-btn {
+            background: #07C160;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            flex: 1;
+        }
+        
+        .download-image-btn {
+            background: #10AEFF;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            flex: 1;
+        }
+        
+        .share-content-btn {
+            background: #FF6B35;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            flex: 1;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #999;
+            font-weight: normal;
+        }
+        
+        .empty-state p {
+            color: #ccc;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal h2 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 14px;
+            resize: none;
+        }
+        
+        .copy-success {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 1001;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .wechat-tips {
+            background: #E8F4FD;
+            border: 1px solid #BBDEFB;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #1976D2;
+        }
+        
+        .export-options {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        
+        .export-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .export-option:last-child {
+            border-bottom: none;
+        }
+        
+        .export-info {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        /* 图片相关样式 */
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: block;
+        }
+        
+        .image-upload-area {
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .image-upload-area:hover {
+            border-color: #07C160;
+            background: #f8fff8;
+        }
+        
+        .image-upload-area.dragover {
+            border-color: #07C160;
+            background: #f0fff0;
+        }
+        
+        .upload-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #999;
+        }
+        
+        .image-block .text-block-content {
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .image-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .image-block-indicator {
+            background: #FF6B35;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+        
+        .share-modal-content {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .share-image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .share-steps {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-size: 13px;
+        }
+        
+        .share-steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .share-steps li {
+            margin-bottom: 8px;
+        }
+        
+        .share-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .share-option-btn {
+            background: #07C160;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .share-option-btn.download {
+            background: #10AEFF;
+        }
+        
+        .multi-share-tips {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 13px;
+            color: #856404;
+        }
+        
+        .download-success {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 1001;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>微信快捷回复</h1>
+            <p class="subtitle">文字复制 + 图片下载，快速分享到微信群</p>
+        </header>
+        
+        <div class="wechat-tips">
+            💡 使用提示：文字内容直接复制，图片内容下载后从相册分享
+        </div>
+        
+        <div class="quick-actions">
+            <button class="action-btn primary" id="addBlockBtn">
+                <span style="font-size: 16px;">+</span>
+                <span>新建话术</span>
+            </button>
+            <button class="action-btn image" id="addImageBtn">
+                <span>🖼️</span>
+                <span>添加图片</span>
+            </button>
+            <button class="action-btn" id="importBtn">
+                <span>📥</span>
+                <span>导入</span>
+            </button>
+            <button class="action-btn secondary" id="exportBtn">
+                <span>📤</span>
+                <span>导出</span>
+            </button>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索话术标题...">
+        </div>
+        
+        <div class="text-blocks-container" id="blocksContainer">
+            <div class="empty-state">
+                <h3>还没有快捷回复内容</h3>
+                <p>点击"新建话术"或"添加图片"开始创建</p>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+                    <button class="action-btn primary" id="firstBlockBtn">创建话术</button>
+                    <button class="action-btn image" id="firstImageBtn">添加图片</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加/编辑文本块的模态框 -->
+    <div class="modal" id="blockModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">新建话术</h2>
+            <div class="form-group">
+                <label for="blockTitle">话术标题</label>
+                <input type="text" id="blockTitle" placeholder="例如：欢迎语、产品介绍...">
+            </div>
+            <div class="form-group">
+                <label for="blockContent">回复内容</label>
+                <textarea id="blockContent" placeholder="请输入回复内容..." rows="4"></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button id="cancelBtn" style="background: #f0f0f0;">取消</button>
+                <button id="saveBtn" style="background: #07C160; color: white;">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加图片的模态框 -->
+    <div class="modal" id="imageModal">
+        <div class="modal-content">
+            <h2>添加图片</h2>
+            <div class="form-group">
+                <label for="imageTitle">图片标题</label>
+                <input type="text" id="imageTitle" placeholder="例如：产品图片、二维码...">
+            </div>
+            <div class="form-group">
+                <label>上传图片</label>
+                <div class="image-upload-area" id="imageUploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div>点击选择图片或拖拽到此处</div>
+                    <div style="font-size: 12px; color: #999; margin-top: 5px;">支持 JPG、PNG 格式</div>
+                </div>
+                <input type="file" id="imageFile" accept="image/*" style="display: none;">
+                <div id="imagePreviewContainer" style="display: none;">
+                    <img id="imagePreview" class="image-preview" alt="图片预览">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="cancelImageBtn" style="background: #f0f0f0;">取消</button>
+                <button id="saveImageBtn" style="background: #FF6B35; color: white;">保存图片</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 分享模态框 -->
+    <div class="modal" id="shareModal">
+        <div class="modal-content share-modal-content">
+            <h2 id="shareModalTitle">分享到微信群</h2>
+            <div id="shareContent">
+                <!-- 动态内容 -->
+            </div>
+            
+            <div class="multi-share-tips">
+                💡 <strong>多群转发技巧：</strong>先发送到一个群，然后使用微信"多选"功能一次性转发到多个群
+            </div>
+            
+            <div class="share-options">
+                <button class="share-option-btn" id="copyForShareBtn">
+                    <span>📋</span>
+                    复制文本内容
+                </button>
+                <button class="share-option-btn download" id="downloadImageBtn">
+                    <span>💾</span>
+                    下载图片到手机
+                </button>
+            </div>
+            
+            <div class="share-steps" id="shareSteps">
+                <!-- 动态步骤说明 -->
+            </div>
+            
+            <div class="modal-buttons">
+                <button id="closeShareBtn" style="background: #f0f0f0; flex: 1;">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 导出选项模态框 -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <h2>导出内容</h2>
+            <div class="export-options">
+                <div class="export-option">
+                    <div>
+                        <strong>导出为HTML文件</strong>
+                        <div class="export-info">可在浏览器中打开查看</div>
+                    </div>
+                    <button id="exportHTMLBtn" style="background: #07C160; color: white; padding: 8px 12px; border: none; border-radius: 6px; font-size: 12px;">导出</button>
+                </div>
+                <div class="export-option">
+                    <div>
+                        <strong>导出为JSON文件</strong>
+                        <div class="export-info">便于数据备份和迁移</div>
+                    </div>
+                    <button id="exportJSONBtn" style="background: #10AEFF; color: white; padding: 8px 12px; border: none; border-radius: 6px; font-size: 12px;">导出</button>
+                </div>
+                <div class="export-option">
+                    <div>
+                        <strong>复制到剪贴板</strong>
+                        <div class="export-info">快速分享给他人</div>
+                    </div>
+                    <button id="exportClipboardBtn" style="background: #FF6B35; color: white; padding: 8px 12px; border: none; border-radius: 6px; font-size: 12px;">复制</button>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="closeExportBtn" style="background: #f0f0f0; flex: 1;">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="copy-success" id="copySuccess">✅ 已复制到剪贴板</div>
+    <div class="download-success" id="downloadSuccess">✅ 图片下载中...</div>
+    
+    <input type="file" id="importFile" accept=".html,.json" style="display: none;">
+
+    <script>
+        // 存储文本块数据
+        let textBlocks = JSON.parse(localStorage.getItem('wechatQuickReplies')) || [];
+        let editingIndex = -1;
+        let currentImageData = null;
+        let currentShareContent = null;
+        let currentShareType = null;
+        let currentShareTitle = null;
+        
+        // DOM元素
+        const blocksContainer = document.getElementById('blocksContainer');
+        const searchInput = document.getElementById('searchInput');
+        const addBlockBtn = document.getElementById('addBlockBtn');
+        const addImageBtn = document.getElementById('addImageBtn');
+        const importBtn = document.getElementById('importBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const importFile = document.getElementById('importFile');
+        const blockModal = document.getElementById('blockModal');
+        const imageModal = document.getElementById('imageModal');
+        const shareModal = document.getElementById('shareModal');
+        const exportModal = document.getElementById('exportModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const shareModalTitle = document.getElementById('shareModalTitle');
+        const shareContent = document.getElementById('shareContent');
+        const shareSteps = document.getElementById('shareSteps');
+        const blockTitle = document.getElementById('blockTitle');
+        const blockContent = document.getElementById('blockContent');
+        const imageTitle = document.getElementById('imageTitle');
+        const imageFile = document.getElementById('imageFile');
+        const imageUploadArea = document.getElementById('imageUploadArea');
+        const imagePreview = document.getElementById('imagePreview');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const saveBtn = document.getElementById('saveBtn');
+        const saveImageBtn = document.getElementById('saveImageBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const cancelImageBtn = document.getElementById('cancelImageBtn');
+        const closeShareBtn = document.getElementById('closeShareBtn');
+        const copyForShareBtn = document.getElementById('copyForShareBtn');
+        const downloadImageBtn = document.getElementById('downloadImageBtn');
+        const firstBlockBtn = document.getElementById('firstBlockBtn');
+        const firstImageBtn = document.getElementById('firstImageBtn');
+        const copySuccess = document.getElementById('copySuccess');
+        const downloadSuccess = document.getElementById('downloadSuccess');
+        
+        // 导出相关元素
+        const exportHTMLBtn = document.getElementById('exportHTMLBtn');
+        const exportJSONBtn = document.getElementById('exportJSONBtn');
+        const exportClipboardBtn = document.getElementById('exportClipboardBtn');
+        const closeExportBtn = document.getElementById('closeExportBtn');
+        
+        // 初始化
+        function init() {
+            renderBlocks();
+            setupEventListeners();
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            addBlockBtn.addEventListener('click', () => openModal());
+            addImageBtn.addEventListener('click', () => openImageModal());
+            firstBlockBtn.addEventListener('click', () => openModal());
+            firstImageBtn.addEventListener('click', () => openImageModal());
+            importBtn.addEventListener('click', () => importFile.click());
+            exportBtn.addEventListener('click', () => openExportModal());
+            importFile.addEventListener('change', importFromFile);
+            saveBtn.addEventListener('click', saveBlock);
+            saveImageBtn.addEventListener('click', saveImage);
+            cancelBtn.addEventListener('click', closeModal);
+            cancelImageBtn.addEventListener('click', closeImageModal);
+            closeShareBtn.addEventListener('click', closeShareModal);
+            copyForShareBtn.addEventListener('click', copyForShare);
+            downloadImageBtn.addEventListener('click', downloadImageForShare);
+            searchInput.addEventListener('input', renderBlocks);
+            
+            // 图片上传相关事件
+            imageUploadArea.addEventListener('click', () => imageFile.click());
+            imageFile.addEventListener('change', handleImageUpload);
+            
+            // 拖拽上传
+            imageUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                imageUploadArea.classList.add('dragover');
+            });
+            
+            imageUploadArea.addEventListener('dragleave', () => {
+                imageUploadArea.classList.remove('dragover');
+            });
+            
+            imageUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                imageUploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    imageFile.files = files;
+                    handleImageUpload();
+                }
+            });
+            
+            // 导出相关事件
+            exportHTMLBtn.addEventListener('click', exportToHTML);
+            exportJSONBtn.addEventListener('click', exportToJSON);
+            exportClipboardBtn.addEventListener('click', exportToClipboard);
+            closeExportBtn.addEventListener('click', closeExportModal);
+            
+            // 点击模态框外部关闭
+            blockModal.addEventListener('click', (e) => {
+                if (e.target === blockModal) closeModal();
+            });
+            
+            imageModal.addEventListener('click', (e) => {
+                if (e.target === imageModal) closeImageModal();
+            });
+            
+            shareModal.addEventListener('click', (e) => {
+                if (e.target === shareModal) closeShareModal();
+            });
+            
+            exportModal.addEventListener('click', (e) => {
+                if (e.target === exportModal) closeExportModal();
+            });
+        }
+        
+        // 打开文本模态框
+        function openModal(index = -1) {
+            editingIndex = index;
+            
+            if (index === -1) {
+                modalTitle.textContent = '新建话术';
+                blockTitle.value = '';
+                blockContent.value = '';
+            } else {
+                modalTitle.textContent = '编辑话术';
+                blockTitle.value = textBlocks[index].title;
+                blockContent.value = textBlocks[index].content;
+            }
+            
+            blockModal.style.display = 'flex';
+            blockTitle.focus();
+        }
+        
+        // 关闭文本模态框
+        function closeModal() {
+            blockModal.style.display = 'none';
+        }
+        
+        // 打开图片模态框
+        function openImageModal(index = -1) {
+            editingIndex = index;
+            currentImageData = null;
+            
+            if (index === -1) {
+                imageTitle.value = '';
+                imagePreviewContainer.style.display = 'none';
+                imageFile.value = '';
+            } else {
+                imageTitle.value = textBlocks[index].title;
+                imagePreview.src = textBlocks[index].content;
+                imagePreviewContainer.style.display = 'block';
+                currentImageData = textBlocks[index].content;
+            }
+            
+            imageModal.style.display = 'flex';
+            imageTitle.focus();
+        }
+        
+        // 关闭图片模态框
+        function closeImageModal() {
+            imageModal.style.display = 'none';
+            currentImageData = null;
+        }
+        
+        // 打开分享模态框
+        function openShareModal(index) {
+            const block = textBlocks[index];
+            currentShareContent = block.content;
+            currentShareType = block.type;
+            currentShareTitle = block.title;
+            
+            shareModalTitle.textContent = `分享${block.type === 'image' ? '图片' : '文本'}: ${block.title}`;
+            
+            if (block.type === 'image') {
+                shareContent.innerHTML = `
+                    <img src="${block.content}" class="share-image-preview" alt="${block.title}">
+                `;
+                shareSteps.innerHTML = `
+                    <strong>图片分享步骤：</strong>
+                    <ol>
+                        <li>点击"下载图片到手机"保存图片</li>
+                        <li>返回微信，进入任意聊天</li>
+                        <li>点击"+"选择"相册"，找到下载的图片</li>
+                        <li>发送图片到一个群</li>
+                        <li><strong>多群转发：</strong>长按图片消息 → 多选 → 选择其他群 → 发送</li>
+                    </ol>
+                `;
+            } else {
+                shareContent.innerHTML = `
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; text-align: left;">
+                        <strong>文本内容：</strong>
+                        <div style="margin-top: 8px; white-space: pre-wrap;">${block.content}</div>
+                    </div>
+                `;
+                shareSteps.innerHTML = `
+                    <strong>文本分享步骤：</strong>
+                    <ol>
+                        <li>点击"复制文本内容"复制到剪贴板</li>
+                        <li>返回微信，进入任意聊天</li>
+                        <li>长按输入框选择"粘贴"发送文本</li>
+                        <li><strong>多群转发：</strong>长按文本消息 → 多选 → 选择其他群 → 发送</li>
+                    </ol>
+                `;
+            }
+            
+            shareModal.style.display = 'flex';
+        }
+        
+        // 关闭分享模态框
+        function closeShareModal() {
+            shareModal.style.display = 'none';
+            currentShareContent = null;
+            currentShareType = null;
+            currentShareTitle = null;
+        }
+        
+        // 复制内容用于分享
+        function copyForShare() {
+            if (currentShareType === 'text') {
+                copyTextToClipboard(currentShareContent);
+                showCopySuccess();
+                setTimeout(() => {
+                    alert('✅ 文本已复制！\n\n请返回微信：\n1. 在任意聊天中粘贴发送\n2. 长按消息选择"多选"\n3. 勾选其他群一次性转发');
+                }, 500);
+            } else {
+                // 对于图片，复制提示文本
+                const textToCopy = `图片分享：${currentShareTitle}\n请查看相册中的图片文件进行分享`;
+                copyTextToClipboard(textToCopy);
+                showCopySuccess();
+                setTimeout(() => {
+                    alert('✅ 提示文本已复制！\n\n请同时：\n1. 点击"下载图片"保存图片到相册\n2. 在微信中发送此提示文本\n3. 再从相册选择图片发送');
+                }, 500);
+            }
+        }
+        
+        // 下载图片用于分享
+        function downloadImageForShare() {
+            if (currentShareType === 'image') {
+                showDownloadSuccess();
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                const filename = `微信图片_${currentShareTitle}_${Date.now()}.png`;
+                link.download = filename;
+                link.href = currentShareContent;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                setTimeout(() => {
+                    alert('💾 图片下载完成！\n\n多群转发步骤：\n1. 图片已保存到手机相册\n2. 在微信中先发送到一个群\n3. 长按图片消息选择"多选"\n4. 勾选其他目标群转发');
+                }, 1500);
+            } else {
+                // 对于文本，提供保存为文本文件的选项
+                const textBlob = new Blob([currentShareContent], { type: 'text/plain;charset=utf-8' });
+                const link = document.createElement('a');
+                link.download = `微信文本_${currentShareTitle}.txt`;
+                link.href = URL.createObjectURL(textBlob);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+        
+        // 直接下载图片
+        function downloadImage(index) {
+            const block = textBlocks[index];
+            showDownloadSuccess();
+            
+            const link = document.createElement('a');
+            const filename = `微信图片_${block.title}_${Date.now()}.png`;
+            link.download = filename;
+            link.href = block.content;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            setTimeout(() => {
+                alert('💾 图片下载完成！\n\n请到相册中查看图片，然后在微信中分享');
+            }, 1500);
+        }
+        
+        // 处理图片上传
+        function handleImageUpload() {
+            const file = imageFile.files[0];
+            if (!file) return;
+            
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件！');
+                return;
+            }
+            
+            // 检查文件大小（限制为5MB）
+            if (file.size > 5 * 1024 * 1024) {
+                alert('图片大小不能超过5MB！');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImageData = e.target.result;
+                imagePreview.src = currentImageData;
+                imagePreviewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // 打开导出模态框
+        function openExportModal() {
+            if (textBlocks.length === 0) {
+                alert('没有内容可以导出');
+                return;
+            }
+            exportModal.style.display = 'flex';
+        }
+        
+        // 关闭导出模态框
+        function closeExportModal() {
+            exportModal.style.display = 'none';
+        }
+        
+        // 保存文本块
+        function saveBlock() {
+            const title = blockTitle.value.trim();
+            const content = blockContent.value.trim();
+            
+            if (!title) {
+                alert('请输入话术标题');
+                return;
+            }
+            
+            if (!content) {
+                alert('请输入回复内容');
+                return;
+            }
+            
+            if (editingIndex === -1) {
+                textBlocks.push({
+                    title,
+                    content,
+                    type: 'text',
+                    createdAt: new Date().toISOString(),
+                    collapsed: false
+                });
+            } else {
+                textBlocks[editingIndex] = {
+                    ...textBlocks[editingIndex],
+                    title,
+                    content
+                };
+            }
+            
+            saveToLocalStorage();
+            renderBlocks();
+            closeModal();
+        }
+        
+        // 保存图片
+        function saveImage() {
+            const title = imageTitle.value.trim();
+            
+            if (!title) {
+                alert('请输入图片标题');
+                return;
+            }
+            
+            if (!currentImageData) {
+                alert('请选择图片');
+                return;
+            }
+            
+            if (editingIndex === -1) {
+                textBlocks.push({
+                    title,
+                    content: currentImageData,
+                    type: 'image',
+                    createdAt: new Date().toISOString(),
+                    collapsed: false
+                });
+            } else {
+                textBlocks[editingIndex] = {
+                    ...textBlocks[editingIndex],
+                    title,
+                    content: currentImageData,
+                    type: 'image'
+                };
+            }
+            
+            saveToLocalStorage();
+            renderBlocks();
+            closeImageModal();
+        }
+        
+        // 删除文本块
+        function deleteBlock(index) {
+            if (confirm('确定要删除这个内容吗？')) {
+                textBlocks.splice(index, 1);
+                saveToLocalStorage();
+                renderBlocks();
+            }
+        }
+        
+        // 复制文本内容
+        function copyTextContent(index) {
+            const block = textBlocks[index];
+            copyTextToClipboard(block.content);
+            showCopySuccess();
+        }
+        
+        // 复制文本到剪贴板
+        function copyTextToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                return true;
+            } catch (err) {
+                console.error('复制失败: ', err);
+                return false;
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+        
+        // 分享内容
+        function shareContentFunc(index) {
+            openShareModal(index);
+        }
+        
+        // 显示复制成功提示
+        function showCopySuccess() {
+            copySuccess.style.display = 'block';
+            setTimeout(() => {
+                copySuccess.style.display = 'none';
+            }, 1500);
+        }
+        
+        // 显示下载成功提示
+        function showDownloadSuccess() {
+            downloadSuccess.style.display = 'block';
+            setTimeout(() => {
+                downloadSuccess.style.display = 'none';
+            }, 1500);
+        }
+        
+        // 切换折叠状态
+        function toggleCollapse(index) {
+            textBlocks[index].collapsed = !textBlocks[index].collapsed;
+            saveToLocalStorage();
+            renderBlocks();
+        }
+        
+        // 渲染文本块
+        function renderBlocks() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredBlocks = textBlocks.filter(block => 
+                block.title.toLowerCase().includes(searchTerm)
+            );
+            
+            blocksContainer.innerHTML = '';
+            
+            if (filteredBlocks.length === 0) {
+                if (textBlocks.length === 0) {
+                    blocksContainer.innerHTML = `
+                        <div class="empty-state">
+                            <h3>还没有快捷回复内容</h3>
+                            <p>点击"新建话术"或"添加图片"开始创建</p>
+                            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+                                <button class="action-btn primary" id="firstBlockBtn">创建话术</button>
+                                <button class="action-btn image" id="firstImageBtn">添加图片</button>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('firstBlockBtn').addEventListener('click', () => openModal());
+                    document.getElementById('firstImageBtn').addEventListener('click', () => openImageModal());
+                } else {
+                    blocksContainer.innerHTML = `
+                        <div class="empty-state">
+                            <h3>没有找到匹配的内容</h3>
+                            <p>尝试使用不同的搜索词</p>
+                        </div>
+                    `;
+                }
+                return;
+            }
+            
+            filteredBlocks.forEach((block, index) => {
+                const originalIndex = textBlocks.findIndex(b => b === block);
+                const blockElement = document.createElement('div');
+                blockElement.className = `text-block ${block.collapsed ? 'collapsed' : ''} ${block.type === 'image' ? 'image-block' : ''}`;
+                
+                const typeIndicator = block.type === 'image' ? '<span class="image-block-indicator">图片</span>' : '';
+                
+                // 根据内容类型渲染不同的操作按钮
+                let footerButtons = '';
+                if (block.type === 'image') {
+                    footerButtons = `
+                        <button class="download-image-btn">下载图片</button>
+                        <button class="share-content-btn">多群分享</button>
+                    `;
+                } else {
+                    footerButtons = `
+                        <button class="copy-content-btn">复制内容</button>
+                        <button class="share-content-btn">多群分享</button>
+                    `;
+                }
+                
+                blockElement.innerHTML = `
+                    <div class="text-block-header">
+                        <div class="text-block-title">
+                            <span class="collapse-icon">▼</span>
+                            ${block.title}
+                            ${typeIndicator}
+                        </div>
+                        <div class="text-block-actions">
+                            ${block.type === 'image' ? 
+                                '<button class="action-icon download" title="下载">💾</button>' : 
+                                '<button class="action-icon copy" title="复制">📋</button>'
+                            }
+                            <button class="action-icon share" title="分享">📤</button>
+                            <button class="action-icon edit" title="编辑">✏️</button>
+                            <button class="action-icon delete" title="删除">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="text-block-content">
+                        ${block.type === 'image' ? 
+                            `<img src="${block.content}" class="image-preview" alt="${block.title}">` : 
+                            block.content.replace(/\n/g, '<br>')}
+                    </div>
+                    <div class="text-block-footer">
+                        ${footerButtons}
+                    </div>
+                `;
+                
+                // 添加事件监听器
+                const header = blockElement.querySelector('.text-block-header');
+                const copyBtn = blockElement.querySelector('.action-icon.copy');
+                const downloadBtn = blockElement.querySelector('.action-icon.download');
+                const shareBtn = blockElement.querySelector('.action-icon.share');
+                const editBtn = blockElement.querySelector('.action-icon.edit');
+                const deleteBtn = blockElement.querySelector('.action-icon.delete');
+                const copyContentBtn = blockElement.querySelector('.copy-content-btn');
+                const downloadImageBtn = blockElement.querySelector('.download-image-btn');
+                const shareContentBtn = blockElement.querySelector('.share-content-btn');
+                
+                // 点击标题切换折叠状态
+                header.addEventListener('click', (e) => {
+                    if (!e.target.closest('.text-block-actions')) {
+                        toggleCollapse(originalIndex);
+                    }
+                });
+                
+                if (copyBtn) {
+                    copyBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        copyTextContent(originalIndex);
+                    });
+                }
+                
+                if (downloadBtn) {
+                    downloadBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        downloadImage(originalIndex);
+                    });
+                }
+                
+                shareBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    shareContentFunc(originalIndex);
+                });
+                
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (block.type === 'image') {
+                        openImageModal(originalIndex);
+                    } else {
+                        openModal(originalIndex);
+                    }
+                });
+                
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteBlock(originalIndex);
+                });
+                
+                if (copyContentBtn) {
+                    copyContentBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        copyTextContent(originalIndex);
+                    });
+                }
+                
+                if (downloadImageBtn) {
+                    downloadImageBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        downloadImage(originalIndex);
+                    });
+                }
+                
+                if (shareContentBtn) {
+                    shareContentBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        shareContentFunc(originalIndex);
+                    });
+                }
+                
+                blocksContainer.appendChild(blockElement);
+            });
+        }
+        
+        // 保存到本地存储
+        function saveToLocalStorage() {
+            localStorage.setItem('wechatQuickReplies', JSON.stringify(textBlocks));
+        }
+        
+        // 从文件导入
+        function importFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    let importedBlocks = [];
+                    
+                    // 尝试解析为JSON
+                    try {
+                        const data = JSON.parse(content);
+                        if (Array.isArray(data)) {
+                            importedBlocks = data;
+                        }
+                    } catch (e) {
+                        // 如果不是JSON，尝试解析HTML
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(content, 'text/html');
+                        const blockElements = doc.querySelectorAll('.text-block');
+                        
+                        blockElements.forEach(block => {
+                            const titleElement = block.querySelector('.text-block-title');
+                            const contentElement = block.querySelector('.text-block-content');
+                            
+                            if (titleElement && contentElement) {
+                                importedBlocks.push({
+                                    title: titleElement.textContent,
+                                    content: contentElement.textContent,
+                                    type: 'text',
+                                    createdAt: new Date().toISOString(),
+                                    collapsed: false
+                                });
+                            }
+                        });
+                    }
+                    
+                    if (importedBlocks.length > 0) {
+                        if (confirm(`找到 ${importedBlocks.length} 条内容，是否导入？`)) {
+                            textBlocks.push(...importedBlocks);
+                            saveToLocalStorage();
+                            renderBlocks();
+                            alert('导入成功！');
+                        }
+                    } else {
+                        alert('没有找到可导入的内容数据');
+                    }
+                } catch (error) {
+                    console.error('导入错误:', error);
+                    alert('导入失败，文件格式不正确');
+                }
+            };
+            
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+        
+        // 导出为HTML文件
+        function exportToHTML() {
+            const htmlContent = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信快捷回复内容导出</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        h1 { color: #07C160; text-align: center; }
+        .text-block { border: 1px solid #e0e0e0; margin-bottom: 15px; padding: 15px; border-radius: 8px; }
+        .text-block-title { font-weight: bold; margin-bottom: 10px; color: #333; }
+        .text-block-content { white-space: pre-line; color: #666; }
+        .image-block img { max-width: 100%; max-height: 200px; border-radius: 6px; }
+        .stats { text-align: center; color: #999; margin-bottom: 20px; }
+        .type-indicator { background: #FF6B35; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>微信快捷回复内容</h1>
+        <div class="stats">共 ${textBlocks.length} 条内容 | 导出时间: ${new Date().toLocaleString()}</div>
+        <div id="blocks">
+            ${textBlocks.map(block => `
+            <div class="text-block ${block.type === 'image' ? 'image-block' : ''}">
+                <div class="text-block-title">
+                    ${block.title}
+                    ${block.type === 'image' ? '<span class="type-indicator">图片</span>' : ''}
+                </div>
+                <div class="text-block-content">
+                    ${block.type === 'image' ? `<img src="${block.content}" alt="${block.title}">` : block.content}
+                </div>
+            </div>
+            `).join('')}
+        </div>
+    </div>
+</body>
+</html>`;
+            
+            downloadFile(htmlContent, '微信快捷回复内容.html', 'text/html');
+            closeExportModal();
+        }
+        
+        // 导出为JSON文件
+        function exportToJSON() {
+            const jsonContent = JSON.stringify(textBlocks, null, 2);
+            downloadFile(jsonContent, '微信快捷回复内容.json', 'application/json');
+            closeExportModal();
+        }
+        
+        // 导出到剪贴板
+        function exportToClipboard() {
+            const exportData = {
+                version: '1.0',
+                exportTime: new Date().toISOString(),
+                count: textBlocks.length,
+                data: textBlocks
+            };
+            
+            const jsonContent = JSON.stringify(exportData, null, 2);
+            copyTextToClipboard(jsonContent);
+            showCopySuccess();
+            closeExportModal();
+        }
+        
+        // 下载文件通用函数
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>
