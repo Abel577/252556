@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>微信快捷回复</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        body {
+            background: #f5f5f5;
+            color: #333;
+            min-height: 100vh;
+            padding: 10px;
+            font-size: 14px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        h1 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #07C160;
+            text-align: center;
+        }
+        
+        .subtitle {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .action-btn {
+            background: white;
+            border: none;
+            padding: 12px 8px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            flex-direction: column;
+        }
+        
+        .action-btn.primary {
+            background: #07C160;
+            color: white;
+        }
+        
+        .action-btn.secondary {
+            background: #10AEFF;
+            color: white;
+        }
+        
+        .search-box {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        
+        .search-box input {
+            width: 100%;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .search-box input:focus {
+            border-color: #07C160;
+        }
+        
+        .text-blocks-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .text-block {
+            background: white;
+            border-radius: 8px;
+            padding: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .text-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+        
+        .text-block-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .collapse-icon {
+            font-size: 12px;
+            color: #999;
+            transition: transform 0.3s ease;
+        }
+        
+        .text-block.collapsed .collapse-icon {
+            transform: rotate(-90deg);
+        }
+        
+        .text-block-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            background: #f8f8f8;
+            border: none;
+        }
+        
+        .action-icon.copy {
+            color: #07C160;
+        }
+        
+        .action-icon.edit {
+            color: #10AEFF;
+        }
+        
+        .action-icon.delete {
+            color: #FA5151;
+        }
+        
+        .text-block-content {
+            padding: 15px;
+            background: #fafafa;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+        
+        .text-block.collapsed .text-block-content {
+            display: none;
+        }
+        
+        .text-block-footer {
+            padding: 10px 15px;
+            background: #f8f8f8;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .text-block.collapsed .text-block-footer {
+            display: none;
+        }
+        
+        .copy-content-btn {
+            background: #07C160;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #999;
+            font-weight: normal;
+        }
+        
+        .empty-state p {
+            color: #ccc;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .modal h2 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 14px;
+            resize: none;
+        }
+        
+        .copy-success {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 1001;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .wechat-tips {
+            background: #E8F4FD;
+            border: 1px solid #BBDEFB;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #1976D2;
+        }
+        
+        .export-options {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        
+        .export-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .export-option:last-child {
+            border-bottom: none;
+        }
+        
+        .export-info {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>微信快捷回复</h1>
+            <p class="subtitle">点击复制后返回微信粘贴发送</p>
+        </header>
+        
+        <div class="wechat-tips">
+            💡 使用提示：点击标题可折叠/展开，点击复制按钮复制内容
+        </div>
+        
+        <div class="quick-actions">
+            <button class="action-btn primary" id="addBlockBtn">
+                <span style="font-size: 16px;">+</span>
+                <span>新建话术</span>
+            </button>
+            <button class="action-btn" id="importBtn">
+                <span>📥</span>
+                <span>导入</span>
+            </button>
+            <button class="action-btn secondary" id="exportBtn">
+                <span>📤</span>
+                <span>导出</span>
+            </button>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索话术标题...">
+        </div>
+        
+        <div class="text-blocks-container" id="blocksContainer">
+            <div class="empty-state">
+                <h3>还没有快捷回复话术</h3>
+                <p>点击"新建话术"添加您的第一条回复模板</p>
+                <button class="action-btn primary" id="firstBlockBtn" style="margin-top: 15px;">
+                    创建第一条话术
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加/编辑文本块的模态框 -->
+    <div class="modal" id="blockModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">新建话术</h2>
+            <div class="form-group">
+                <label for="blockTitle">话术标题</label>
+                <input type="text" id="blockTitle" placeholder="例如：欢迎语、产品介绍...">
+            </div>
+            <div class="form-group">
+                <label for="blockContent">回复内容</label>
+                <textarea id="blockContent" placeholder="请输入回复内容..." rows="4"></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button id="cancelBtn" style="background: #f0f0f0;">取消</button>
+                <button id="saveBtn" style="background: #07C160; color: white;">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 导出选项模态框 -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <h2>导出话术</h2>
+            <div class="export-options">
+                <div class="export-option">
+                    <div>
+                        <strong>导出为HTML文件</strong>
+                        <div class="export-info">可在浏览器中打开查看</div>
+                    </div>
+                    <button id="exportHTMLBtn" style="background: #07C160; color: white; padding: 8px 12px; border: none; border-radius: 6px; font-size: 12px;">导出</button>
+                </div>
+                <div class="export-option">
+                    <div>
+                        <strong>导出为JSON文件</strong>
+                        <div class="export-info">便于数据备份和迁移</div>
+                    </div>
+                    <button id="exportJSONBtn" style="background: #10AEFF; color: white; padding: 8px 12px; border: none; border-radius: 6px; font-size: 12px;">导出</button>
+                </div>
+                <div class="export-option">
+                    <div>
+                        <strong>复制到剪贴板</strong>
+                        <div class="export-info">快速分享给他人</div>
+                    </div>
+                    <button id="exportClipboardBtn" style="background: #FF6B35; color: white; padding: 8px 12px; border: none; border-radius: 6px; font-size: 12px;">复制</button>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="closeExportBtn" style="background: #f0f0f0; flex: 1;">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="copy-success" id="copySuccess">✅ 已复制到剪贴板</div>
+    
+    <input type="file" id="importFile" accept=".html,.json" style="display: none;">
+
+    <script>
+        // 存储文本块数据
+        let textBlocks = JSON.parse(localStorage.getItem('wechatQuickReplies')) || [];
+        let editingIndex = -1;
+        
+        // DOM元素
+        const blocksContainer = document.getElementById('blocksContainer');
+        const searchInput = document.getElementById('searchInput');
+        const addBlockBtn = document.getElementById('addBlockBtn');
+        const importBtn = document.getElementById('importBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const importFile = document.getElementById('importFile');
+        const blockModal = document.getElementById('blockModal');
+        const exportModal = document.getElementById('exportModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const blockTitle = document.getElementById('blockTitle');
+        const blockContent = document.getElementById('blockContent');
+        const saveBtn = document.getElementById('saveBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const firstBlockBtn = document.getElementById('firstBlockBtn');
+        const copySuccess = document.getElementById('copySuccess');
+        
+        // 导出相关元素
+        const exportHTMLBtn = document.getElementById('exportHTMLBtn');
+        const exportJSONBtn = document.getElementById('exportJSONBtn');
+        const exportClipboardBtn = document.getElementById('exportClipboardBtn');
+        const closeExportBtn = document.getElementById('closeExportBtn');
+        
+        // 初始化
+        function init() {
+            renderBlocks();
+            setupEventListeners();
+            
+            // 微信环境检测
+            if (navigator.userAgent.match(/MicroMessenger/i)) {
+                console.log('在微信环境中运行');
+            }
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            addBlockBtn.addEventListener('click', () => openModal());
+            firstBlockBtn.addEventListener('click', () => openModal());
+            importBtn.addEventListener('click', () => importFile.click());
+            exportBtn.addEventListener('click', () => openExportModal());
+            importFile.addEventListener('change', importFromFile);
+            saveBtn.addEventListener('click', saveBlock);
+            cancelBtn.addEventListener('click', closeModal);
+            searchInput.addEventListener('input', renderBlocks);
+            
+            // 导出相关事件
+            exportHTMLBtn.addEventListener('click', exportToHTML);
+            exportJSONBtn.addEventListener('click', exportToJSON);
+            exportClipboardBtn.addEventListener('click', exportToClipboard);
+            closeExportBtn.addEventListener('click', closeExportModal);
+            
+            // 点击模态框外部关闭
+            blockModal.addEventListener('click', (e) => {
+                if (e.target === blockModal) closeModal();
+            });
+            
+            exportModal.addEventListener('click', (e) => {
+                if (e.target === exportModal) closeExportModal();
+            });
+        }
+        
+        // 打开模态框
+        function openModal(index = -1) {
+            editingIndex = index;
+            
+            if (index === -1) {
+                modalTitle.textContent = '新建话术';
+                blockTitle.value = '';
+                blockContent.value = '';
+            } else {
+                modalTitle.textContent = '编辑话术';
+                blockTitle.value = textBlocks[index].title;
+                blockContent.value = textBlocks[index].content;
+            }
+            
+            blockModal.style.display = 'flex';
+            blockTitle.focus();
+        }
+        
+        // 关闭模态框
+        function closeModal() {
+            blockModal.style.display = 'none';
+        }
+        
+        // 打开导出模态框
+        function openExportModal() {
+            if (textBlocks.length === 0) {
+                alert('没有话术可以导出');
+                return;
+            }
+            exportModal.style.display = 'flex';
+        }
+        
+        // 关闭导出模态框
+        function closeExportModal() {
+            exportModal.style.display = 'none';
+        }
+        
+        // 保存文本块
+        function saveBlock() {
+            const title = blockTitle.value.trim();
+            const content = blockContent.value.trim();
+            
+            if (!title) {
+                alert('请输入话术标题');
+                return;
+            }
+            
+            if (!content) {
+                alert('请输入回复内容');
+                return;
+            }
+            
+            if (editingIndex === -1) {
+                textBlocks.push({
+                    title,
+                    content,
+                    createdAt: new Date().toISOString(),
+                    collapsed: false  // 默认展开状态
+                });
+            } else {
+                textBlocks[editingIndex] = {
+                    ...textBlocks[editingIndex],
+                    title,
+                    content
+                };
+            }
+            
+            saveToLocalStorage();
+            renderBlocks();
+            closeModal();
+        }
+        
+        // 删除文本块
+        function deleteBlock(index) {
+            if (confirm('确定要删除这个话术吗？')) {
+                textBlocks.splice(index, 1);
+                saveToLocalStorage();
+                renderBlocks();
+            }
+        }
+        
+        // 复制文本块内容
+        function copyBlockContent(index) {
+            const block = textBlocks[index];
+            const textToCopy = block.content;
+            
+            // 创建临时textarea元素
+            const textarea = document.createElement('textarea');
+            textarea.value = textToCopy;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess();
+                }
+            } catch (err) {
+                console.error('复制失败: ', err);
+                alert('复制失败，请长按选择复制');
+            }
+            
+            document.body.removeChild(textarea);
+        }
+        
+        // 显示复制成功提示
+        function showCopySuccess() {
+            copySuccess.style.display = 'block';
+            setTimeout(() => {
+                copySuccess.style.display = 'none';
+            }, 1500);
+        }
+        
+        // 切换折叠状态
+        function toggleCollapse(index) {
+            textBlocks[index].collapsed = !textBlocks[index].collapsed;
+            saveToLocalStorage();
+            renderBlocks();
+        }
+        
+        // 渲染文本块
+        function renderBlocks() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredBlocks = textBlocks.filter(block => 
+                block.title.toLowerCase().includes(searchTerm)
+            );
+            
+            blocksContainer.innerHTML = '';
+            
+            if (filteredBlocks.length === 0) {
+                if (textBlocks.length === 0) {
+                    blocksContainer.innerHTML = `
+                        <div class="empty-state">
+                            <h3>还没有快捷回复话术</h3>
+                            <p>点击"新建话术"添加您的第一条回复模板</p>
+                            <button class="action-btn primary" id="firstBlockBtn" style="margin-top: 15px;">
+                                创建第一条话术
+                            </button>
+                        </div>
+                    `;
+                    document.getElementById('firstBlockBtn').addEventListener('click', () => openModal());
+                } else {
+                    blocksContainer.innerHTML = `
+                        <div class="empty-state">
+                            <h3>没有找到匹配的话术</h3>
+                            <p>尝试使用不同的搜索词</p>
+                        </div>
+                    `;
+                }
+                return;
+            }
+            
+            filteredBlocks.forEach((block, index) => {
+                const originalIndex = textBlocks.findIndex(b => b === block);
+                const blockElement = document.createElement('div');
+                blockElement.className = `text-block ${block.collapsed ? 'collapsed' : ''}`;
+                
+                blockElement.innerHTML = `
+                    <div class="text-block-header">
+                        <div class="text-block-title">
+                            <span class="collapse-icon">▼</span>
+                            ${block.title}
+                        </div>
+                        <div class="text-block-actions">
+                            <button class="action-icon copy" title="复制">📋</button>
+                            <button class="action-icon edit" title="编辑">✏️</button>
+                            <button class="action-icon delete" title="删除">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="text-block-content">
+                        ${block.content.replace(/\n/g, '<br>')}
+                    </div>
+                    <div class="text-block-footer">
+                        <button class="copy-content-btn">复制内容</button>
+                    </div>
+                `;
+                
+                // 添加事件监听器
+                const header = blockElement.querySelector('.text-block-header');
+                const copyBtn = blockElement.querySelector('.action-icon.copy');
+                const editBtn = blockElement.querySelector('.action-icon.edit');
+                const deleteBtn = blockElement.querySelector('.action-icon.delete');
+                const copyContentBtn = blockElement.querySelector('.copy-content-btn');
+                
+                // 点击标题切换折叠状态
+                header.addEventListener('click', (e) => {
+                    // 只有当点击的是标题区域而不是按钮时才触发折叠
+                    if (!e.target.closest('.text-block-actions')) {
+                        toggleCollapse(originalIndex);
+                    }
+                });
+                
+                copyBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    copyBlockContent(originalIndex);
+                });
+                
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openModal(originalIndex);
+                });
+                
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteBlock(originalIndex);
+                });
+                
+                copyContentBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    copyBlockContent(originalIndex);
+                });
+                
+                blocksContainer.appendChild(blockElement);
+            });
+        }
+        
+        // 保存到本地存储
+        function saveToLocalStorage() {
+            localStorage.setItem('wechatQuickReplies', JSON.stringify(textBlocks));
+        }
+        
+        // 从文件导入
+        function importFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    let importedBlocks = [];
+                    
+                    // 尝试解析为JSON
+                    try {
+                        const data = JSON.parse(content);
+                        if (Array.isArray(data)) {
+                            importedBlocks = data;
+                        }
+                    } catch (e) {
+                        // 如果不是JSON，尝试解析HTML
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(content, 'text/html');
+                        const blockElements = doc.querySelectorAll('.text-block');
+                        
+                        blockElements.forEach(block => {
+                            const titleElement = block.querySelector('.text-block-title');
+                            const contentElement = block.querySelector('.text-block-content');
+                            
+                            if (titleElement && contentElement) {
+                                importedBlocks.push({
+                                    title: titleElement.textContent,
+                                    content: contentElement.textContent,
+                                    createdAt: new Date().toISOString(),
+                                    collapsed: false
+                                });
+                            }
+                        });
+                    }
+                    
+                    if (importedBlocks.length > 0) {
+                        if (confirm(`找到 ${importedBlocks.length} 条话术，是否导入？`)) {
+                            textBlocks.push(...importedBlocks);
+                            saveToLocalStorage();
+                            renderBlocks();
+                            alert('导入成功！');
+                        }
+                    } else {
+                        alert('没有找到可导入的话术数据');
+                    }
+                } catch (error) {
+                    console.error('导入错误:', error);
+                    alert('导入失败，文件格式不正确');
+                }
+            };
+            
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+        
+        // 导出为HTML文件
+        function exportToHTML() {
+            const htmlContent = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信快捷回复话术导出</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        h1 { color: #07C160; text-align: center; }
+        .text-block { border: 1px solid #e0e0e0; margin-bottom: 15px; padding: 15px; border-radius: 8px; }
+        .text-block-title { font-weight: bold; margin-bottom: 10px; color: #333; }
+        .text-block-content { white-space: pre-line; color: #666; }
+        .stats { text-align: center; color: #999; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>微信快捷回复话术</h1>
+        <div class="stats">共 ${textBlocks.length} 条话术 | 导出时间: ${new Date().toLocaleString()}</div>
+        <div id="blocks">
+            ${textBlocks.map(block => `
+            <div class="text-block">
+                <div class="text-block-title">${block.title}</div>
+                <div class="text-block-content">${block.content}</div>
+            </div>
+            `).join('')}
+        </div>
+    </div>
+</body>
+</html>`;
+            
+            downloadFile(htmlContent, '微信快捷回复话术.html', 'text/html');
+            closeExportModal();
+        }
+        
+        // 导出为JSON文件
+        function exportToJSON() {
+            const jsonContent = JSON.stringify(textBlocks, null, 2);
+            downloadFile(jsonContent, '微信快捷回复话术.json', 'application/json');
+            closeExportModal();
+        }
+        
+        // 导出到剪贴板
+        function exportToClipboard() {
+            const exportData = {
+                version: '1.0',
+                exportTime: new Date().toISOString(),
+                count: textBlocks.length,
+                data: textBlocks
+            };
+            
+            const jsonContent = JSON.stringify(exportData, null, 2);
+            
+            // 创建临时textarea元素
+            const textarea = document.createElement('textarea');
+            textarea.value = jsonContent;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess();
+                    closeExportModal();
+                }
+            } catch (err) {
+                console.error('复制失败: ', err);
+                alert('复制失败，请手动复制');
+            }
+            
+            document.body.removeChild(textarea);
+        }
+        
+        // 下载文件通用函数
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>
